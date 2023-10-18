@@ -1,4 +1,4 @@
-use crate::is_zero::{IsZeroChip, IsZeroConfig};
+use super::chips::is_zero::{IsZeroChip, IsZeroConfig};
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::{AssignedCell, Layouter, SimpleFloorPlanner, Value},
@@ -39,8 +39,8 @@ impl<F: FieldExt> FunctionChip<F> {
         let output = meta.advice_column();
         let is_zero_advice_column = meta.advice_column();
         let instance = meta.instance_column();
-        meta.enable_equality(a);
-        meta.enable_equality(b);
+        // meta.enable_equality(a);
+        // meta.enable_equality(b);
         meta.enable_equality(output);
         meta.enable_equality(instance);
       
@@ -132,13 +132,14 @@ impl<F: FieldExt> FunctionChip<F> {
 
 }
 
+
 #[derive(Default)]
 struct FunctionCircuit<F> {
-    a: [F; 10],
+    a: Vec<F>,  
     b: F,
     _marker: PhantomData<F>,
-    // c: F,
 }
+
 
 impl<F: FieldExt> Circuit<F> for FunctionCircuit<F> {
     type Config = FunctionConfig<F>;
@@ -147,6 +148,7 @@ impl<F: FieldExt> Circuit<F> for FunctionCircuit<F> {
     fn without_witnesses(&self) -> Self {
         Self::default()
     }
+  
 
     fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
         FunctionChip::configure(meta)
@@ -175,13 +177,36 @@ mod tests {
     use halo2_proofs::{dev::MockProver, pasta::Fp};
 
     #[test]
-    
     fn test_example1() {
-        let a: [Fp; 10] = [Fp::from(1), Fp::from(2), Fp::from(1), Fp::from(9), Fp::from(9), Fp::from(1000), Fp::from(65), Fp::from(21), Fp::from(0), Fp::from(100)];
+
+        // let a: [Fp; 10] = [Fp::from(1), Fp::from(2), Fp::from(1), Fp::from(9), Fp::from(9), Fp::from(1000), Fp::from(65), Fp::from(21), Fp::from(0), Fp::from(100)];
+        let mut a:Vec<Fp> = Vec::new();
+        for i in 0..10000{
+            if i == 0{
+                a.push(Fp::from(1));
+            }
+            else{
+                a.push(Fp::from(2));
+            }
+            
+        }
+        
         let b = Fp::from(1);
+
+        let mut z:Vec<Fp> = Vec::new();
+        for i in 0..10000{
+            if i == 0{
+                z.push(Fp::from(1));
+            }
+            else{
+                z.push(Fp::from(0));
+            }
+        }
+        
         // let constant = Fp::from(16);
         // let z = Fp::from(0); 
-        let z: [Fp; 10] = [Fp::from(1), Fp::from(0), Fp::from(1), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0)];
+        // let z: [Fp; 10] = [Fp::from(1), Fp::from(0), Fp::from(1), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0), Fp::from(0)];
+
         let circuit = FunctionCircuit {
             a,
             b,
@@ -189,7 +214,7 @@ mod tests {
         };
         // let c = vec![z];
 
-        let prover: MockProver<Fp> = MockProver::run(8, &circuit, vec![z.to_vec()]).unwrap();
+        let prover: MockProver<Fp> = MockProver::run(18, &circuit, vec![z.to_vec()]).unwrap();
         prover.assert_satisfied();
     }
 }
